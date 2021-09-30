@@ -42,7 +42,7 @@ exports.createFlight = async (req, res) => {
   console.log("userId", userId);
   const { date, time, from, to, kind, plate, model, timeH, timeM, plus } =
     req.body;
-  const newFlight = Flight.create({
+  const newFlight = await Flight.create({
     date,
     time,
     from,
@@ -55,7 +55,7 @@ exports.createFlight = async (req, res) => {
     plus,
     user: userId,
   });
-  console.log(newFlight);
+  console.log("Nuevo vuelo:", newFlight);
   await User.findByIdAndUpdate(
     { _id: userId },
     { $push: { flights: newFlight._id } }
