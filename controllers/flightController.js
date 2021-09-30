@@ -1,5 +1,6 @@
-const Flight = require("./../models/flightModel")
-const Airports = require("./../models/airportsModel")
+const Flight = require("./../models/flightModel");
+const Airports = require("./../models/airportsModel");
+const User = require("../models/userModel");
 
 /*exports.getFlights = (req, res) => {
     Flight.find()
@@ -8,7 +9,7 @@ const Airports = require("./../models/airportsModel")
     .then((flights) => {
         const list = flights
         console.log(list)
-        res.render("flights/flights", {flights: list})
+        res.render("flights/flights", {flights)
     })
     .catch((e) => {
         console.log(e)
@@ -16,94 +17,117 @@ const Airports = require("./../models/airportsModel")
 }
 */
 exports.getFlights = (req, res) => {
-    //User.find({})
-    Flight.find()
+  const _id = req.session.currentUser._id;
+  console.log("_id", _id);
+  //User.find({})
+  Flight.find()
     .populate("from")
     .populate("to")
+    .populate("user")
     .then((flights) => {
-        const list = flights
-        console.log(list)
-        res.render("flights/flights", {flights: list})
+      console.log(flights);
+      const list = flights;
+      //  console.log(list);
+      res.render("flights/flights", { flights: list });
     })
     .catch((e) => {
-        console.log(e)
-    })
-}
+      console.log(e);
+    });
+};
 
-exports.createFlight = (req, res) => {
-//    createFlight.user = req.user.id
-    const {date, time, from, to, kind, plate, model, timeH, timeM, plus} = req.body
-    Flight.create({
-        date,
-        time,
-        from,
-        to,
-        kind,
-        plate,
-        model,
-        timeH,
-        timeM,
-        plus
-    })
-    .then((newFlight) => {
-        console.log(newFlight)
-        res.redirect("/flights")
-    })
-    .catch((e) => {
-        console.log(e)
-    })
-}
+exports.createFlight = async (req, res) => {
+  //    createFlight.user = req.user.id
+
+  const userId = req.session.currentUser._id;
+  console.log("userId", userId);
+  const { date, time, from, to, kind, plate, model, timeH, timeM, plus } =
+    req.body;
+  const newFlight = Flight.create({
+    date,
+    time,
+    from,
+    to,
+    kind,
+    plate,
+    model,
+    timeH,
+    timeM,
+    plus,
+    user: userId,
+  });
+  console.log(newFlight);
+  await User.findByIdAndUpdate(
+    { _id: userId },
+    { $push: { flights: newFlight._id } }
+  );
+  return res.redirect("/flights/");
+};
 
 exports.getCreatedFlights = (req, res) => {
-    Airports.find()
-        .then((airports) => {
-            res.render("flights/new-flight", {airports})
-        })
-        .catch((e) => {
-            console.log(e)
-        })
-}
+  Airports.find()
+    .then((airports) => {
+      res.render("flights/new-flight", { airports });
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+};
 
 exports.flightDetails = (req, res) => {
-    const { id } = req.params
-    Flight.findById(id)
+  const { id } = req.params;
+  Flight.findById(id)
     .populate("from")
     .populate("to")
-        .then((details) => {
-            console.log(details)
-            res.render("flights/flight-details", details)
-        })
-        .catch((e) => {
-            console.log(e)
-        })
-}
+    .then((details) => {
+      console.log(details);
+      res.render("flights/flight-details", details);
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+};
 
 exports.deleteFlight = (req, res) => {
-    const { id } = req.params
-    Flight.findByIdAndRemove(id)
-        .then(() => {
-            res.redirect("/flights")
-        })
-        .catch((e) => {
-            console.log(e)
-        })
-}
+  const { id } = req.params;
+  Flight.findByIdAndRemove(id)
+    .then(() => {
+      res.redirect("/flights");
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+};
 
 exports.editFlight = async (req, res) => {
-    const { id } = req.params
-    const editFlight = await Flight.findById(id)
-    const editAirports = await Airports.find() //obj 2
-    return res.render("flights/edit-flight", { Flight: editFlight, airports: editAirports })
-}
+  const { id } = req.params;
+  const editFlight = await Flight.findById(id);
+  const editAirports = await Airports.find(); //obj 2
+  return res.render("flights/edit-flight", {
+    Flight: editFlight,
+    airports: editAirports,
+  });
+};
 
 exports.editFlightForm = async (req, res) => {
-    const { id } = req.params
-    const { date, time, from, to, kind, plate, model, timeH, timeM, plus } = req.body
-    Flight.findByIdAndUpdate(id, {date, time, from, to, kind, plate, model, timeH, timeM, plus})
-        .then(() => {
-            res.redirect("/flights")
-        })
-        .catch((e) => {
-            console.log(e)
-        })
-}
+  const { id } = req.params;
+  const { date, time, from, to, kind, plate, model, timeH, timeM, plus } =
+    req.body;
+  Flight.findByIdAndUpdate(id, {
+    date,
+    time,
+    from,
+    to,
+    kind,
+    plate,
+    model,
+    timeH,
+    timeM,
+    plus,
+  })
+    .then(() => {
+      res.redirect("/flights");
+    })
+    .catch((e) => {
+      console.log(e);
+    });
+};
